@@ -7,6 +7,7 @@ import {
   findReservationDb,
   getUserInfo,
   getReservation,
+  deleteReservation,
 } from './db.js';
 
 const app = express();
@@ -78,6 +79,40 @@ app.post('/user', async (req, res) => {
     ret['status'] = 'success';
     ret['userInfo'] = userInfo;
     ret['userReservation'] = userReservation;
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/userorder', async (req, res) => {
+  const username = req.body.username;
+  const userReservation = await getReservation(username);
+  const ret = {};
+  if (userReservation) {
+    ret['status'] = 'success';
+    ret['userReservation'] = userReservation;
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/cancel', async (req, res) => {
+  const username = req.body.username;
+  const date = req.body.date;
+  const time = req.body.time;
+  const room = req.body.room;
+  const ret = {};
+  const user = await deleteReservation(username, date, time, room);
+  if (user) {
+    ret['status'] = 'success';
     // status code 200: OK
     res.status(200).send(ret);
   } else {

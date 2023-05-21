@@ -78,8 +78,15 @@ export async function addReservationDb(username, date, time, room) {
     const db = client.db(DB_NAME);
     const users = db.collection(RESERVATION_COLLECTION_NAME);
     const query = { username: username };
+    // 添加到reservation属性的数组中
     const update = {
-      $push: { reservation: { date: date, time: time, room: room } },
+      $push: {
+        reservation: {
+          date: date,
+          time: time,
+          room: room,
+        },
+      },
     };
     const user = await users.updateOne(query, update);
     return user;
@@ -126,6 +133,30 @@ export async function getReservation(username) {
     const users = db.collection(RESERVATION_COLLECTION_NAME);
     const query = { username: username };
     const user = await users.findOne(query);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function deleteReservation(username, date, time, room) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(RESERVATION_COLLECTION_NAME);
+    const query = { username: username };
+    const update = {
+      $pull: {
+        reservation: {
+          date: date,
+          time: time,
+          room: room,
+        },
+      },
+    };
+    // 删除reservation属性的数组中的某个元素
+    const user = await users.updateOne(query, update);
+
     return user;
   } finally {
     await client.close();
