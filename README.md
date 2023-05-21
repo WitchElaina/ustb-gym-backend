@@ -6,6 +6,12 @@
 npm install
 ```
 
+设置 MongoDB 数据库 URI, 创建`.env`文件, 写入
+
+```
+MONGODB_URI=<your mongodb uri>
+```
+
 运行服务器
 
 ```bash
