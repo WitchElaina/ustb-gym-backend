@@ -8,6 +8,7 @@ const uri = process.env.MONGODB_URI;
 const DB_NAME = 'gym';
 const ACCOUNT_COLLECTION_NAME = 'account';
 const RESERVATION_COLLECTION_NAME = 'reservation';
+const ROOM_COLLECTION_NAME = 'room';
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -157,6 +158,111 @@ export async function deleteReservation(username, date, time, room) {
     // 删除reservation属性的数组中的某个元素
     const user = await users.updateOne(query, update);
 
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function addRoom(room) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = {
+      room: room,
+      round: [],
+    };
+    const user = await users.insertOne(query);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function deleteRoom(room) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = { room: room };
+    const user = await users.deleteOne(query);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function addRoomRoundInfo(room, date, time, price) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = { room: room };
+    const update = {
+      $push: {
+        round: {
+          date: date,
+          time: time,
+          price: price,
+        },
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getRoomRoundInfo(room) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = { room: room };
+    const user = await users.findOne(query);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function deleteRoomRoundInfo(room, date, time) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = { room: room };
+    const update = {
+      $pull: {
+        round: {
+          date: date,
+          time: time,
+        },
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function updateRoomRoundInfo(room, date, time, price) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = { room: room, 'round.date': date, 'round.time': time };
+    const update = {
+      $set: {
+        'round.$.date': date,
+        'round.$.time': time,
+        'round.$.price': price,
+      },
+    };
+    const user = await users.updateOne(query, update);
     return user;
   } finally {
     await client.close();
