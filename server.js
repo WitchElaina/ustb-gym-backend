@@ -34,6 +34,14 @@ app.post('/register', async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
   const role = req.body.role;
+  // 用户名重复则失败
+  const userCheck = await getUserInfo(username);
+  if (userCheck) {
+    // status code 401: Unauthorized
+    res.status(401).send('Register failed!');
+    return;
+  }
+
   const user = await registerDb(username, password, role);
   if (user) {
     // status code 200: OK
