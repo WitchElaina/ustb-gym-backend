@@ -8,6 +8,14 @@ import {
   getUserInfo,
   getReservation,
   deleteReservation,
+  addRoom,
+  deleteRoom,
+  getRoomNames,
+  addRoomRound,
+  getRoomRounds,
+  deleteRoomRound,
+  updateRoomRound,
+  getAllRounds,
 } from './db.js';
 
 const app = express();
@@ -125,6 +133,120 @@ app.post('/cancel', async (req, res) => {
     res.status(200).send(ret);
   } else {
     ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/room', async (req, res) => {
+  const rooms = await getRoomNames();
+  const ret = {};
+  if (rooms) {
+    ret['status'] = 'success';
+    ret['rooms'] = rooms;
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/room/add', async (req, res) => {
+  const room = req.body.room;
+  const ret = {};
+  const user = await addRoom(room);
+  if (user) {
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/room/delete', async (req, res) => {
+  const room = req.body.room;
+  const ret = {};
+  const user = await deleteRoom(room);
+  if (user) {
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/round', async (req, res) => {
+  const room = req.body.room;
+  const ret = {};
+  const user = await getRoomRounds(room);
+  if (user) {
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/round/add', async (req, res) => {
+  const room = req.body.room;
+  const date = req.body.date;
+  const startTime = req.body.startTime;
+  const endTime = req.body.endTime;
+  const openFor = req.body.openFor;
+  const price = req.body.price;
+  const ret = {};
+  const user = await addRoomRound(room, date, startTime, endTime, openFor, price);
+  if (user) {
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/round/delete', async (req, res) => {
+  const room = req.body.room;
+  const date = req.body.date;
+  const startTime = req.body.startTime;
+  const endTime = req.body.endTime;
+  const ret = {};
+  const user = await deleteRoomRound(room, date, startTime, endTime);
+  if (user) {
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/round/all', async (req, res) => {
+  const ret = {};
+  const user = await getAllRounds();
+  if (user) {
+    ret['status'] = 'success';
+    ret['rounds'] = user;
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    ret['rounds'] = [];
     // status code 401: Unauthorized
     res.status(401).send(ret);
   }

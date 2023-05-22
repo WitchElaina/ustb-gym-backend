@@ -193,7 +193,23 @@ export async function deleteRoom(room) {
   }
 }
 
-export async function addRoomRoundInfo(room, date, time, price) {
+export async function getRoomNames() {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const names = [];
+    const cursor = users.find();
+    await cursor.forEach((doc) => {
+      names.push(doc.room);
+    });
+    return names;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function addRoomRound(room, date, startTime, endTime, openFor, price) {
   try {
     await client.connect();
     const db = client.db(DB_NAME);
@@ -203,7 +219,9 @@ export async function addRoomRoundInfo(room, date, time, price) {
       $push: {
         round: {
           date: date,
-          time: time,
+          startTime: startTime,
+          endTime: endTime,
+          openFor: openFor,
           price: price,
         },
       },
@@ -215,7 +233,23 @@ export async function addRoomRoundInfo(room, date, time, price) {
   }
 }
 
-export async function getRoomRoundInfo(room) {
+export async function getAllRounds() {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const rounds = [];
+    const cursor = users.find();
+    await cursor.forEach((doc) => {
+      rounds.push(doc.round);
+    });
+    return rounds;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getRoomRounds(room) {
   try {
     await client.connect();
     const db = client.db(DB_NAME);
@@ -228,7 +262,7 @@ export async function getRoomRoundInfo(room) {
   }
 }
 
-export async function deleteRoomRoundInfo(room, date, time) {
+export async function deleteRoomRound(room, date, startTime, endTime) {
   try {
     await client.connect();
     const db = client.db(DB_NAME);
@@ -238,7 +272,8 @@ export async function deleteRoomRoundInfo(room, date, time) {
       $pull: {
         round: {
           date: date,
-          time: time,
+          startTime: startTime,
+          endTime: endTime,
         },
       },
     };
@@ -249,7 +284,8 @@ export async function deleteRoomRoundInfo(room, date, time) {
   }
 }
 
-export async function updateRoomRoundInfo(room, date, time, price) {
+// todo
+export async function updateRoomRound(room, date, time, price) {
   try {
     await client.connect();
     const db = client.db(DB_NAME);
