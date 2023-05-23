@@ -9,6 +9,7 @@ const DB_NAME = 'gym';
 const ACCOUNT_COLLECTION_NAME = 'account';
 const RESERVATION_COLLECTION_NAME = 'reservation';
 const ROOM_COLLECTION_NAME = 'room';
+const CDKEY_COLLECTION_NAME = 'cdkey';
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -57,6 +58,7 @@ export async function registerDb(username, password, role) {
       username: username,
       password: password,
       role: role,
+      balance: 0,
     };
     const user = await users.insertOne(query);
     // RESERVATION_COLLECTION 中创建键
@@ -338,6 +340,118 @@ export async function updateRoomRound(room, date, time, price) {
       },
     };
     const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function payDb(username, price) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const query = { username: username };
+    const update = {
+      $inc: {
+        balance: -price,
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getBalance(username) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const query = { username: username };
+    const user = await users.findOne(query);
+    return user.balance;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function addBalance(username, price) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const query = { username: username };
+    const update = {
+      $inc: {
+        balance: price,
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function addCDkey(cdkey, balance) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(CDKEY_COLLECTION_NAME);
+    const query = { cdkey: cdkey };
+    const update = {
+      $set: {
+        balance: balance,
+      },
+    };
+    const user = await users.updateOne(query, update, { upsert: true });
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getCDkey(cdkey) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(CDKEY_COLLECTION_NAME);
+    const query = { cdkey: cdkey };
+    const user = await users.findOne(query);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getAllCDkeys() {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(CDKEY_COLLECTION_NAME);
+    const cdkeys = [];
+    const cursor = users.find();
+    await cursor.forEach((doc) => {
+      cdkeys.push({
+        cdkey: doc.cdkey,
+        balance: doc.balance,
+      });
+    });
+    return cdkeys;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function deleteCDkey(cdkey) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(CDKEY_COLLECTION_NAME);
+    const query = { cdkey: cdkey };
+    const user = await users.deleteOne(query);
     return user;
   } finally {
     await client.close();

@@ -16,6 +16,13 @@ import {
   deleteRoomRound,
   updateRoomRound,
   getAllRounds,
+  payDb,
+  addBalance,
+  getBalance,
+  addCDkey,
+  getCDkey,
+  getAllCDkeys,
+  deleteCDkey,
 } from './db.js';
 
 const app = express();
@@ -248,6 +255,125 @@ app.post('/round/all', async (req, res) => {
   } else {
     ret['status'] = 'failed';
     ret['rounds'] = [];
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/cdkey/add', async (req, res) => {
+  const cdkey = req.body.cdkey;
+  const balance = req.body.balance;
+  const ret = {};
+  const user = await addCDkey(cdkey, balance);
+  if (user) {
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/cdkey/delete', async (req, res) => {
+  const cdkey = req.body.cdkey;
+  const ret = {};
+  const user = await deleteCDkey(cdkey);
+  if (user) {
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/cdkey/all', async (req, res) => {
+  const ret = {};
+  const user = await getAllCDkeys();
+  if (user) {
+    ret['status'] = 'success';
+    ret['cdkeys'] = user;
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/cdkey', async (req, res) => {
+  const cdkey = req.body.cdkey;
+  const ret = {};
+  const user = await getCDkey(cdkey);
+  if (user) {
+    ret['status'] = 'success';
+    ret['cdkey'] = user;
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+// 用户充值
+app.post('/user/recharge', async (req, res) => {
+  const username = req.body.username;
+  const cdkey = req.body.cdkey;
+  const ret = {};
+  // 验证cdkey是否存在
+  const cdkeyInfo = await getCDkey(cdkey);
+  if (cdkeyInfo) {
+    // 使用cdkey并销毁
+    const balance = cdkeyInfo.balance;
+    // 增加用户余额
+    await addBalance(username, balance);
+    await deleteCDkey(cdkey);
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    ret['msg'] = 'cdkey not found';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/user/balance', async (req, res) => {
+  const username = req.body.username;
+  const ret = {};
+  const user = await getBalance(username);
+  if (user) {
+    ret['status'] = 'success';
+    ret['balance'] = user.balance;
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    ret['balance'] = 0;
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/user/pay', async (req, res) => {
+  const username = req.body.username;
+  const price = req.body.price;
+  const ret = {};
+  const user = await payDb(username, price);
+  if (user) {
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
     // status code 401: Unauthorized
     res.status(401).send(ret);
   }
