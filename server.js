@@ -189,6 +189,7 @@ app.post('/round', async (req, res) => {
   const user = await getRoomRounds(room);
   if (user) {
     ret['status'] = 'success';
+    ret['rounds'] = user;
     // status code 200: OK
     res.status(200).send(ret);
   } else {

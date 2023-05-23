@@ -90,6 +90,23 @@ export async function addReservationDb(username, date, time, room) {
       },
     };
     const user = await users.updateOne(query, update);
+    // 修改round中的reserver
+    const round = db.collection(ROOM_COLLECTION_NAME);
+    // 分割time为startTime和endTime
+    const startTime = time.split('-')[0];
+    const endTime = time.split('-')[1];
+    const query2 = {
+      room: room,
+      round: {
+        $elemMatch: { startTime: startTime, endTime: endTime, date: date },
+      },
+    };
+    const update2 = {
+      $set: {
+        'round.$.reserver': username,
+      },
+    };
+    await round.updateOne(query2, update2);
     return user;
   } finally {
     await client.close();
@@ -157,6 +174,23 @@ export async function deleteReservation(username, date, time, room) {
     };
     // 删除reservation属性的数组中的某个元素
     const user = await users.updateOne(query, update);
+    // 修改round中的reserver
+    const round = db.collection(ROOM_COLLECTION_NAME);
+    // 分割time为startTime和endTime
+    const startTime = time.split('-')[0];
+    const endTime = time.split('-')[1];
+    const query2 = {
+      room: room,
+      round: {
+        $elemMatch: { startTime: startTime, endTime: endTime, date: date },
+      },
+    };
+    const update2 = {
+      $set: {
+        'round.$.reserver': 'none',
+      },
+    };
+    await round.updateOne(query2, update2);
 
     return user;
   } finally {
@@ -223,6 +257,7 @@ export async function addRoomRound(room, date, startTime, endTime, openFor, pric
           endTime: endTime,
           openFor: openFor,
           price: price,
+          reserver: 'none',
         },
       },
     };
@@ -241,7 +276,11 @@ export async function getAllRounds() {
     const rounds = [];
     const cursor = users.find();
     await cursor.forEach((doc) => {
-      rounds.push(doc.round);
+      // 加入room属性
+      doc.round.forEach((round) => {
+        round.room = doc.room;
+        rounds.push(round);
+      });
     });
     return rounds;
   } finally {
