@@ -1,6 +1,8 @@
 FROM mongo:latest
 
-RUN apt-get update && apt-get install -y mongodb
+RUN apt-get update && apt-get install -y curl
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+    && apt-get update && apt-get install -y nodejs build-essential
 
 COPY init.js /docker-entrypoint-initdb.d/
 
