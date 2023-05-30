@@ -1,4 +1,5 @@
 import express from 'express';
+import dotenv from 'dotenv';
 import cors from 'cors';
 import {
   loginDb,
@@ -25,8 +26,10 @@ import {
   deleteCDkey,
 } from './db.js';
 
+dotenv.config();
+
 const app = express();
-const port = 3456;
+const port = process.env.PORT || 3456;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
