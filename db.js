@@ -457,3 +457,67 @@ export async function deleteCDkey(cdkey) {
     await client.close();
   }
 }
+
+export async function getAllRoomRounds() {
+  // [room:[..rounds..], room:[..rounds..]]
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const cursor = users.find();
+    const documents = await cursor.toArray();
+    return documents;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getAllUser() {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const cursor = users.find();
+    const documents = await cursor.toArray();
+    return documents;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function updateUser(username, password, balance, role) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const query = { username: username };
+    const update = {
+      $set: {
+        password: password,
+        role: role,
+        balance: balance,
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function deleteUser(username) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const query = { username: username };
+    const user = await users.deleteOne(query);
+    // 删除reservation中的user
+    const reservations = db.collection(RESERVATION_COLLECTION_NAME);
+    const query2 = { username: username };
+    const user2 = await reservations.deleteMany(query2);
+    return user2;
+  } finally {
+    await client.close();
+  }
+}

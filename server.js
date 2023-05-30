@@ -24,6 +24,10 @@ import {
   getCDkey,
   getAllCDkeys,
   deleteCDkey,
+  getAllRoomRounds,
+  getAllUser,
+  updateUser,
+  deleteUser,
 } from './db.js';
 
 dotenv.config();
@@ -355,7 +359,7 @@ app.post('/user/balance', async (req, res) => {
   const user = await getBalance(username);
   if (user) {
     ret['status'] = 'success';
-    ret['balance'] = user.balance;
+    ret['balance'] = user;
     // status code 200: OK
     res.status(200).send(ret);
   } else {
@@ -369,8 +373,80 @@ app.post('/user/balance', async (req, res) => {
 app.post('/user/pay', async (req, res) => {
   const username = req.body.username;
   const price = req.body.price;
+  const balance = await getBalance(username);
+  console.log(balance);
   const ret = {};
+  if (balance < price) {
+    ret['msg'] = '余额不足';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+    return;
+  }
   const user = await payDb(username, price);
+  if (user) {
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/roomrounds', async (req, res) => {
+  const ret = {};
+  const user = await getAllRoomRounds();
+  if (user) {
+    ret['status'] = 'success';
+    ret['roomrounds'] = user;
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/manage/user/all', async (req, res) => {
+  const ret = {};
+  const user = await getAllUser();
+  if (user) {
+    ret['status'] = 'success';
+    ret['allUser'] = user;
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    ret['allUser'] = [];
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/manage/user/update', async (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+  const balance = req.body.balance;
+  const role = req.body.role;
+  const ret = {};
+  const user = await updateUser(username, password, balance, role);
+  if (user) {
+    ret['status'] = 'success';
+    // status code 200: OK
+    res.status(200).send(ret);
+  } else {
+    ret['status'] = 'failed';
+    // status code 401: Unauthorized
+    res.status(401).send(ret);
+  }
+});
+
+app.post('/manage/user/delete', async (req, res) => {
+  const username = req.body.username;
+  const ret = {};
+  const user = await deleteUser(username);
   if (user) {
     ret['status'] = 'success';
     // status code 200: OK
