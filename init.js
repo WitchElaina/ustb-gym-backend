@@ -13,3 +13,9 @@ db.createCollection(ACCOUNT_COLLECTION_NAME);
 db.createCollection(RESERVATION_COLLECTION_NAME);
 db.createCollection(ROOM_COLLECTION_NAME);
 db.createCollection(CDKEY_COLLECTION_NAME);
+
+// Add test data
+db[CDKEY_COLLECTION_NAME].insert({
+  cdkey: 'vme50',
+  balance: 50,
+});
