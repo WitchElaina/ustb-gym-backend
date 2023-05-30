@@ -8,6 +8,8 @@ const uri = process.env.MONGODB_URI;
 const DB_NAME = 'gym';
 const ACCOUNT_COLLECTION_NAME = 'account';
 const RESERVATION_COLLECTION_NAME = 'reservation';
+const ROOM_COLLECTION_NAME = 'room';
+const CDKEY_COLLECTION_NAME = 'cdkey';
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -56,6 +58,7 @@ export async function registerDb(username, password, role) {
       username: username,
       password: password,
       role: role,
+      balance: 0,
     };
     const user = await users.insertOne(query);
     // RESERVATION_COLLECTION 中创建键
@@ -89,6 +92,23 @@ export async function addReservationDb(username, date, time, room) {
       },
     };
     const user = await users.updateOne(query, update);
+    // 修改round中的reserver
+    const round = db.collection(ROOM_COLLECTION_NAME);
+    // 分割time为startTime和endTime
+    const startTime = time.split('-')[0];
+    const endTime = time.split('-')[1];
+    const query2 = {
+      room: room,
+      round: {
+        $elemMatch: { startTime: startTime, endTime: endTime, date: date },
+      },
+    };
+    const update2 = {
+      $set: {
+        'round.$.reserver': username,
+      },
+    };
+    await round.updateOne(query2, update2);
     return user;
   } finally {
     await client.close();
@@ -156,7 +176,282 @@ export async function deleteReservation(username, date, time, room) {
     };
     // 删除reservation属性的数组中的某个元素
     const user = await users.updateOne(query, update);
+    // 修改round中的reserver
+    const round = db.collection(ROOM_COLLECTION_NAME);
+    // 分割time为startTime和endTime
+    const startTime = time.split('-')[0];
+    const endTime = time.split('-')[1];
+    const query2 = {
+      room: room,
+      round: {
+        $elemMatch: { startTime: startTime, endTime: endTime, date: date },
+      },
+    };
+    const update2 = {
+      $set: {
+        'round.$.reserver': 'none',
+      },
+    };
+    await round.updateOne(query2, update2);
 
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function addRoom(room) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = {
+      room: room,
+      round: [],
+    };
+    const user = await users.insertOne(query);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function deleteRoom(room) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = { room: room };
+    const user = await users.deleteOne(query);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getRoomNames() {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const names = [];
+    const cursor = users.find();
+    await cursor.forEach((doc) => {
+      names.push(doc.room);
+    });
+    return names;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function addRoomRound(room, date, startTime, endTime, openFor, price) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = { room: room };
+    const update = {
+      $push: {
+        round: {
+          date: date,
+          startTime: startTime,
+          endTime: endTime,
+          openFor: openFor,
+          price: price,
+          reserver: 'none',
+        },
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getAllRounds() {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const rounds = [];
+    const cursor = users.find();
+    await cursor.forEach((doc) => {
+      // 加入room属性
+      doc.round.forEach((round) => {
+        round.room = doc.room;
+        rounds.push(round);
+      });
+    });
+    return rounds;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getRoomRounds(room) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = { room: room };
+    const user = await users.findOne(query);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function deleteRoomRound(room, date, startTime, endTime) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = { room: room };
+    const update = {
+      $pull: {
+        round: {
+          date: date,
+          startTime: startTime,
+          endTime: endTime,
+        },
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+// todo
+export async function updateRoomRound(room, date, time, price) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const query = { room: room, 'round.date': date, 'round.time': time };
+    const update = {
+      $set: {
+        'round.$.date': date,
+        'round.$.time': time,
+        'round.$.price': price,
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function payDb(username, price) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const query = { username: username };
+    const update = {
+      $inc: {
+        balance: -price,
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getBalance(username) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const query = { username: username };
+    const user = await users.findOne(query);
+    return user.balance;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function addBalance(username, price) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const query = { username: username };
+    const update = {
+      $inc: {
+        balance: price,
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function addCDkey(cdkey, balance) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(CDKEY_COLLECTION_NAME);
+    const query = { cdkey: cdkey };
+    const update = {
+      $set: {
+        balance: balance,
+      },
+    };
+    const user = await users.updateOne(query, update, { upsert: true });
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getCDkey(cdkey) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(CDKEY_COLLECTION_NAME);
+    const query = { cdkey: cdkey };
+    const user = await users.findOne(query);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getAllCDkeys() {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(CDKEY_COLLECTION_NAME);
+    const cdkeys = [];
+    const cursor = users.find();
+    await cursor.forEach((doc) => {
+      cdkeys.push({
+        cdkey: doc.cdkey,
+        balance: doc.balance,
+      });
+    });
+    return cdkeys;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function deleteCDkey(cdkey) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(CDKEY_COLLECTION_NAME);
+    const query = { cdkey: cdkey };
+    const user = await users.deleteOne(query);
     return user;
   } finally {
     await client.close();
