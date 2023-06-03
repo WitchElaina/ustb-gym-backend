@@ -27,10 +27,7 @@ docker build -t ustb-gym-backend . --network host
 运行容器
 
 ```bash
-docker run -d -p 3456:3456 --name ustb-backend \
-	-e MONGO_INITDB_ROOT_USERNAME=mongoadmin \
-	-e MONGO_INITDB_ROOT_PASSWORD=123456 \
-	ustb-gym-backend
+docker run -d -p 3456:3456 --name ustb-backend -e MONGO_INITDB_ROOT_USERNAME=mongoadmin	-e MONGO_INITDB_ROOT_PASSWORD=123456 ustb-gym-backend
 ```
 
 访问容器终端

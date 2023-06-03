@@ -28,7 +28,7 @@ import {
   getAllUser,
   updateUser,
   deleteUser,
-} from './db.js';
+} from './dbgoose.js';
 
 dotenv.config();
 

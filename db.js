@@ -15,8 +15,8 @@ const CDKEY_COLLECTION_NAME = 'cdkey';
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
+    strict: false,
+    deprecationErrors: false,
   },
 });
 
@@ -43,6 +43,14 @@ export async function loginDb(username, password) {
     const query = { username: username, password: password };
     const user = await users.findOne(query);
     return user;
+  } catch (error) {
+    if (error.name === 'MongoServerClosedError') {
+      console.log('MongoDB server closed, retrying...');
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      return loginDb(username, password);
+    } else {
+      throw error;
+    }
   } finally {
     await client.close();
   }
@@ -240,6 +248,12 @@ export async function getRoomNames() {
       names.push(doc.room);
     });
     return names;
+  } catch (error) {
+    if (error.name === 'MongoServerClosedError') {
+      console.log('MongoDB server closed, retrying...');
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      return getRoomNames();
+    }
   } finally {
     await client.close();
   }
