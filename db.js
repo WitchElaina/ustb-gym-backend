@@ -1,3 +1,6 @@
+// !! HAS BEEN DEPRECATED !!
+// This file is no longer used in the application. The new db driver is dbgoose.js which uses Mongoose.
+
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import dotenv from 'dotenv';
 
