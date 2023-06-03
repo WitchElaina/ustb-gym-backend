@@ -1,3 +1,6 @@
+// !! HAS BEEN DEPRECATED !!
+// This file is no longer used in the application. The new db driver is dbgoose.js which uses Mongoose.
+
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import dotenv from 'dotenv';
 
@@ -15,8 +18,8 @@ const CDKEY_COLLECTION_NAME = 'cdkey';
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
+    strict: false,
+    deprecationErrors: false,
   },
 });
 
@@ -43,6 +46,14 @@ export async function loginDb(username, password) {
     const query = { username: username, password: password };
     const user = await users.findOne(query);
     return user;
+  } catch (error) {
+    if (error.name === 'MongoServerClosedError') {
+      console.log('MongoDB server closed, retrying...');
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      return loginDb(username, password);
+    } else {
+      throw error;
+    }
   } finally {
     await client.close();
   }
@@ -240,6 +251,12 @@ export async function getRoomNames() {
       names.push(doc.room);
     });
     return names;
+  } catch (error) {
+    if (error.name === 'MongoServerClosedError') {
+      console.log('MongoDB server closed, retrying...');
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      return getRoomNames();
+    }
   } finally {
     await client.close();
   }
@@ -453,6 +470,70 @@ export async function deleteCDkey(cdkey) {
     const query = { cdkey: cdkey };
     const user = await users.deleteOne(query);
     return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getAllRoomRounds() {
+  // [room:[..rounds..], room:[..rounds..]]
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ROOM_COLLECTION_NAME);
+    const cursor = users.find();
+    const documents = await cursor.toArray();
+    return documents;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function getAllUser() {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const cursor = users.find();
+    const documents = await cursor.toArray();
+    return documents;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function updateUser(username, password, balance, role) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const query = { username: username };
+    const update = {
+      $set: {
+        password: password,
+        role: role,
+        balance: balance,
+      },
+    };
+    const user = await users.updateOne(query, update);
+    return user;
+  } finally {
+    await client.close();
+  }
+}
+
+export async function deleteUser(username) {
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const users = db.collection(ACCOUNT_COLLECTION_NAME);
+    const query = { username: username };
+    const user = await users.deleteOne(query);
+    // 删除reservation中的user
+    const reservations = db.collection(RESERVATION_COLLECTION_NAME);
+    const query2 = { username: username };
+    const user2 = await reservations.deleteMany(query2);
+    return user2;
   } finally {
     await client.close();
   }
