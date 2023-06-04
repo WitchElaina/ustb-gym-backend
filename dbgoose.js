@@ -13,6 +13,7 @@ const CDKEY_COLLECTION_NAME = 'cdkey';
 
 const client = mongoose
   .connect(uri, {
+    dbName: DB_NAME,
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
