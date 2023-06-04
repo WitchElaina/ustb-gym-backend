@@ -18,16 +18,16 @@ npm install
 
 ### 使用 Docker
 
-构建镜像
+从 Docker Hub 拉取镜像
 
 ```bash
-docker build -t ustb-gym-backend . --network host
+docker pull witchelaina/ustb-gym-backend
 ```
 
 运行容器
 
 ```bash
-docker run -d -p 3456:3456 --name ustb-backend -e MONGO_INITDB_ROOT_USERNAME=mongoadmin	-e MONGO_INITDB_ROOT_PASSWORD=123456 ustb-gym-backend
+docker run -d -p 3456:3456 --name ustb-backend -e MONGO_INITDB_ROOT_USERNAME=mongoadmin -e MONGO_INITDB_ROOT_PASSWORD=123456 witchelaina/ustb-gym-backend
 ```
 
 访问容器终端

@@ -12,7 +12,7 @@ WORKDIR /app
 
 COPY .env .
 COPY server.js .
-COPY db.js .
+COPY dbgoose.js .
 COPY package.json .
 COPY package-lock.json .
 
